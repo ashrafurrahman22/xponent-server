@@ -10,7 +10,7 @@ app.use(express.json());
 
 // mongodb
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.zup4rtw.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -30,6 +30,14 @@ async function run(){
             const identities = await cursor.toArray();
             res.send(identities);
         })
+        
+         // catch single item
+         app.get('/identity/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const result = await identityCollection.findOne(query);
+            res.send(result);
+        })
 
 
         // post API
@@ -38,6 +46,35 @@ async function run(){
             const result = await identityCollection.insertOne(identity);
             res.send(result);
         });
+
+        // update || Put aPI
+        // update stock
+        app.put('/identity/:id', async(req, res)=>{
+            const id = req.params.id;
+            const updatedIdentity = req.body;
+            const filter = {_id : ObjectId(id)};
+            const options = { upsert : true };
+            const updatedDoc = {
+                $set : {
+                    name : updatedIdentity.name,
+                    occupation : updatedIdentity.occupation,
+                    email : updatedIdentity.email,
+                    age : updatedIdentity.age
+                }
+            };
+            const result = await identityCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+            })
+
+
+         // Delete
+         app.delete('/identity/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const result = await identityCollection.deleteOne(query);
+            res.send(result);
+        });
+
 
         
 
